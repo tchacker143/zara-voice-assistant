@@ -58,8 +58,9 @@ def ask():
     elif "your name" in user_message:
         reply = "I'm Zara, your assistant!"
     elif "time" in user_message:
-        current_time = datetime.now().strftime('%I:%M %p')
+        current_time = get_indian_time()
         reply = f"The current time is {current_time}."
+
     else:
         reply = "Sorry, I didn't understand that. Could you say it again?"
 
