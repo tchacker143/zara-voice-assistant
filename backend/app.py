@@ -4,6 +4,7 @@ from langdetect import detect
 from gtts import gTTS
 import os
 import random
+from datetime import datetime
 
 app = Flask(__name__, template_folder="../frontend", static_folder="../frontend/static")
 CORS(app)
@@ -50,6 +51,9 @@ def ask():
         reply = "I'm doing great, thank you for asking!"
     elif "your name" in user_message:
         reply = "I'm Zara, your assistant!"
+    elif "time" in user_message:
+        current_time = datetime.now().strftime('%I:%M %p')
+        reply = f"The current time is {current_time}."
     else:
         reply = "Sorry, I didn't understand that. Could you say it again?"
 
