@@ -35,6 +35,16 @@ def get_indian_time():
     india_time = datetime.now(india)
     return india_time.strftime('%I:%M %p')
 
+import geocoder
+
+def get_location():
+    g = geocoder.ip('me')
+    if g.ok:
+        return f"Your current location is {g.city}, {g.state}, {g.country}"
+    else:
+        return "Sorry, I couldn't detect your location."
+
+
 @app.route('/ask', methods=['POST'])
 def ask():
     data = request.get_json()

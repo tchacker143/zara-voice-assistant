@@ -5,3 +5,4 @@ langdetect
 gunicorn
 datetime
 pytz
+geocoder
