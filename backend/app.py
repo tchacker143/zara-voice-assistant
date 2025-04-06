@@ -70,6 +70,8 @@ def ask():
     elif "time" in user_message:
         current_time = get_indian_time()
         reply = f"The current time is {current_time}."
+    elif "location" in user_message or "where am i" in user_message:
+        reply = get_location()
 
     else:
         reply = "Sorry, I didn't understand that. Could you say it again?"
