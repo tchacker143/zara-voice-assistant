@@ -73,7 +73,8 @@ def ask():
         reply = f"The current time is {current_time}."
     elif "location" in user_message or "where am i" in user_message:
         reply = get_location()
-
+    elif "Thanks" in user_message or "Thank you" in user_message:
+        reply = "I am glad that I was able to help you in any way!."
     else:
         reply = "Sorry, I didn't understand that. Could you say it again?"
 
