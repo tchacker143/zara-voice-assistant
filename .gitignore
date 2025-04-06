@@ -1,0 +1,1 @@
+-e "__pycache__/\n*.pyc\n.env\nvenv/\nstatic/audio/\n*.sqlite3\n.DS_Store" 

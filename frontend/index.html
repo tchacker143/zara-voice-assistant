@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zara - Your Assistant</title>
+
+  <!-- 🌟 Favicon for the tab -->
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}"/>
+
+  <!-- 💅 Custom styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <div class="kyra-container">
+    <!-- Consider renaming class to zara-container if you want full consistency -->
+    <img id="kyra-face" src="{{ url_for('static', filename='images/kyra_neutral.png') }}" alt="Zara's Face">
+    <div class="wave"></div>
+    <div id="status">Listening...</div>
+    <button id="listen-btn">🎙️ Listen</button>
+  </div>
+
+  <!-- 🧠 Voice Assistant Script -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

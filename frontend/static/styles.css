@@ -1,0 +1,73 @@
+body {
+  background-color: #0a0a0a;
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.kyra-container {
+  text-align: center;
+  position: relative;
+}
+
+#kyra-face {
+  width: 300px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  z-index: 2;
+  position: relative;
+}
+
+#status {
+  margin-top: 20px;
+  font-size: 1.2em;
+  opacity: 0.8;
+}
+
+/* 🎵 Wave Animation Effect */
+.wave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(0,255,255,0.2) 0%, rgba(0,255,255,0) 80%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: pulse 2s infinite ease-in-out;
+  z-index: 1;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.05);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.6;
+  }
+}
+#listen-btn {
+  padding: 12px 24px;
+  font-size: 1em;
+  background-color: #00ffcc;
+  color: black;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+}
+
+#listen-btn:hover {
+  background-color: #00ccaa;
+}
