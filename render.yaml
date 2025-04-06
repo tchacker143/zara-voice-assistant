@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: zara-voice-assistant
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn backend.app:app
+    autoDeploy: true
+    envVars:
+      - key: FLASK_ENV
+        value: production
