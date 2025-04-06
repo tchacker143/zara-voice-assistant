@@ -6,6 +6,7 @@ import os
 import random
 from datetime import datetime
 import pytz
+import requests
 
 app = Flask(__name__, template_folder="../frontend", static_folder="../frontend/static")
 CORS(app)
@@ -78,6 +79,23 @@ def ask():
 
     return jsonify({'reply': reply, 'audio': None})
 
+@app.route('/resolve-location', methods=['POST'])
+def resolve_location():
+    data = request.get_json()
+    lat = data.get('lat')
+    lon = data.get('lon')
+
+    try:
+        response = requests.get(f'https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}')
+        if response.ok:
+            info = response.json()
+            address = info.get('display_name', 'Unknown location')
+            return jsonify({'address': f"You are currently near: {address}"})
+        else:
+            return jsonify({'address': "Unable to fetch address."})
+    except Exception as e:
+        print("Reverse geocoding error:", e)
+        return jsonify({'address': "Something went wrong."})
 @app.route('/')
 def home():
     return render_template('index.html')

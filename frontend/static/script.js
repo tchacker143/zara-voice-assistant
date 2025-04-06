@@ -7,6 +7,45 @@ recognition.lang = 'en-IN';
 recognition.interimResults = false;
 recognition.continuous = false;
 
+const kyraFace = document.getElementById("kyra-face");
+const statusDiv = document.getElementById("status");
+const listenBtn = document.getElementById("listen-btn");
+
+let currentMood = "neutral";
+
+// 🎭 Mood ↔️ Image Mapping
+const moodToImage = (mood, talking = false) => {
+  return `/static/images/kyra_${mood}${talking ? '_talking' : ''}.png`;
+};
+
+// 🔊 Speak Function with Lip Sync
+const speak = (text) => {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-IN';
+
+  kyraFace.src = moodToImage(currentMood, true);
+  utterance.onend = () => {
+    kyraFace.src = moodToImage(currentMood, false);
+  };
+
+  window.speechSynthesis.speak(utterance);
+};
+
+// 😐→😊 Mood Detection
+function detectMood(responseText) {
+  const text = responseText.toLowerCase();
+  if (text.includes("glad") || text.includes("happy") || text.includes("great")) return "happy";
+  if (text.includes("thinking") || text.includes("let me check")) return "thinking";
+  if (text.includes("wow") || text.includes("really?")) return "surprised";
+  return "neutral";
+}
+
+// 🎧 Start Listening
+listenBtn.onclick = () => {
+  console.log("👆 Listen button clicked.");
+  recognition.start();
+};
+
 recognition.onstart = () => {
   console.log("🎙️ Voice recognition started.");
   listenBtn.disabled = true;
@@ -19,60 +58,59 @@ recognition.onend = () => {
   listenBtn.innerText = "🎙️ Listen";
 };
 
-// 🔴 Error handling
 recognition.onerror = (event) => {
   console.error("❌ Speech Recognition Error:", event.error);
   speak("Sorry, I couldn't hear that. Please try again.");
 };
 
-const kyraFace = document.getElementById("kyra-face");
-const statusDiv = document.getElementById("status");
-const listenBtn = document.getElementById("listen-btn");
+// 📍 Detect Location Function
+function detectLocation() {
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log(`📍 Latitude: ${latitude}, Longitude: ${longitude}`);
 
-let currentMood = "neutral";
+        try {
+          const res = await fetch('/resolve-location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat: latitude, lon: longitude })
+          });
 
-const moodToImage = (mood, talking = false) => {
-  return `/static/images/kyra_${mood}${talking ? '_talking' : ''}.png`;
-};
-
-// 🗣️ Voice synthesis
-const speak = (text) => {
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-IN';
-
-  // 🟠 Lip sync: show talking face
-  kyraFace.src = moodToImage(currentMood, true);
-
-  utterance.onend = () => {
-    kyraFace.src = moodToImage(currentMood, false);
-  };
-
-  window.speechSynthesis.speak(utterance);
-};
-
-// 🧠 Mood detection from response
-function detectMood(responseText) {
-  const text = responseText.toLowerCase();
-  if (text.includes("glad") || text.includes("happy") || text.includes("great")) return "happy";
-  if (text.includes("thinking") || text.includes("let me check")) return "thinking";
-  if (text.includes("wow") || text.includes("really?")) return "surprised";
-  return "neutral";
+          const data = await res.json();
+          const locationResponse = data.address || "I couldn't determine your location.";
+          currentMood = "thinking";
+          statusDiv.innerText = `Zara: ${locationResponse}`;
+          speak(locationResponse);
+        } catch (err) {
+          console.error("🌍 Location fetch error:", err);
+          speak("Sorry, I couldn't get your location.");
+        }
+      },
+      (error) => {
+        console.error("⚠️ Geolocation error:", error);
+        speak("Location access was denied or unavailable.");
+      }
+    );
+  } else {
+    speak("Geolocation is not supported in this browser.");
+  }
 }
 
-// 🎧 Button click to start listening
-listenBtn.onclick = () => {
-  console.log("👆 Listen button clicked.");
-  recognition.start();
-};
-
-// 🔥 Main voice result handler
+// 🧠 Voice command handler
 recognition.onresult = (event) => {
-  console.log("🎤 onresult triggered:", event);
   const transcript = event.results[0][0].transcript;
   console.log("🗣️ Transcript:", transcript);
   statusDiv.innerText = `You: ${transcript}`;
 
-  // Send to backend
+  // 🌍 Check for location trigger
+  if (transcript.toLowerCase().includes("where am i") || transcript.toLowerCase().includes("what's my location") || transcript.toLowerCase().includes("my location")) {
+    detectLocation();
+    return;
+  }
+
+  // 🤖 Normal command handling
   fetch('/ask', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -88,10 +126,7 @@ recognition.onresult = (event) => {
     statusDiv.innerText = `Zara: ${reply}`;
 
     if (audioUrl) {
-      // 🟢 Play custom audio (e.g. Malayalam)
       const audio = new Audio(audioUrl);
-
-      // 🟠 Lip sync
       kyraFace.src = moodToImage(currentMood, true);
 
       audio.onended = () => {
@@ -108,7 +143,6 @@ recognition.onresult = (event) => {
         speak(reply);
       });
     } else {
-      // 🔵 Default English speech
       speak(reply);
     }
   })
