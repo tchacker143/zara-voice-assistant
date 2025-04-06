@@ -4,3 +4,4 @@ gTTS
 langdetect
 gunicorn
 datetime
+pytz

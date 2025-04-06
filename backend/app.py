@@ -5,6 +5,7 @@ from gtts import gTTS
 import os
 import random
 from datetime import datetime
+import pytz
 
 app = Flask(__name__, template_folder="../frontend", static_folder="../frontend/static")
 CORS(app)
@@ -28,6 +29,11 @@ def generate_malayalam_audio(text):
     filepath = os.path.join("frontend/static", filename)  # Save in frontend/static
     tts.save(filepath)
     return filename
+
+def get_indian_time():
+    india = pytz.timezone('Asia/Kolkata')
+    india_time = datetime.now(india)
+    return india_time.strftime('%I:%M %p')
 
 @app.route('/ask', methods=['POST'])
 def ask():
