@@ -63,30 +63,33 @@ recognition.onerror = (event) => {
   speak("Sorry, I couldn't hear that. Please try again.");
 };
 
-// 📍 Detect Location Function
+// 📍 Detect Location Function (Updated)
 function detectLocation() {
   if ("geolocation" in navigator) {
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        console.log(`📍 Latitude: ${latitude}, Longitude: ${longitude}`);
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
 
-        try {
-          const res = await fetch('/resolve-location', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lat: latitude, lon: longitude })
-          });
+        console.log(`📍 Latitude: ${lat}, Longitude: ${lon}`);
 
-          const data = await res.json();
+        fetch('/resolve-location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lat, lon })
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log("🌍 Location response:", data);
           const locationResponse = data.address || "I couldn't determine your location.";
           currentMood = "thinking";
           statusDiv.innerText = `Zara: ${locationResponse}`;
           speak(locationResponse);
-        } catch (err) {
-          console.error("🌍 Location fetch error:", err);
+        })
+        .catch(error => {
+          console.error("🌍 Location fetch error:", error);
           speak("Sorry, I couldn't get your location.");
-        }
+        });
       },
       (error) => {
         console.error("⚠️ Geolocation error:", error);
@@ -105,7 +108,12 @@ recognition.onresult = (event) => {
   statusDiv.innerText = `You: ${transcript}`;
 
   // 🌍 Check for location trigger
-  if (transcript.toLowerCase().includes("where am i") || transcript.toLowerCase().includes("what's my location") || transcript.toLowerCase().includes("my location")) {
+  const lowerTranscript = transcript.toLowerCase();
+  if (
+    lowerTranscript.includes("where am i") ||
+    lowerTranscript.includes("what's my location") ||
+    lowerTranscript.includes("my location")
+  ) {
     detectLocation();
     return;
   }

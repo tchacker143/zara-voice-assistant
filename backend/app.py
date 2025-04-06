@@ -86,16 +86,21 @@ def resolve_location():
     lon = data.get('lon')
 
     try:
-        response = requests.get(f'https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}')
+        response = requests.get(
+            f'https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}',
+            headers={'User-Agent': 'kyra-assistant'}
+        )
         if response.ok:
             info = response.json()
             address = info.get('display_name', 'Unknown location')
             return jsonify({'address': f"You are currently near: {address}"})
         else:
+            print("Failed response:", response.text)
             return jsonify({'address': "Unable to fetch address."})
     except Exception as e:
         print("Reverse geocoding error:", e)
-        return jsonify({'address': "Something went wrong."})
+        return jsonify({'address': f"Something went wrong: {str(e)}"})
+
 @app.route('/')
 def home():
     return render_template('index.html')
