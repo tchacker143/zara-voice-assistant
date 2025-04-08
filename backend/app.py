@@ -62,7 +62,7 @@ def ask():
 
     # 💡 Step 2: If password is being expected
     if session.get('awaiting_dev_password'):
-        developer_password = "zara_dev_007"  # 🔐 Change this
+        developer_password = "zara123"  # 🔐 Change this
         if user_message.strip() == developer_password:
             session['dev_mode'] = True
             session.pop('awaiting_dev_password', None)
