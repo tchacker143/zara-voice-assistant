@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from flask_cors import CORS
 from langdetect import detect
 from gtts import gTTS
@@ -11,6 +11,7 @@ import requests
 app = Flask(__name__, template_folder="../frontend", static_folder="../frontend/static")
 CORS(app)
 
+app.secret_key = 'your-super-secret-key'
 def malayalam_response(user_message):
     if "പേര്" in user_message:
         return "എന്റെ പേര് കൈറയാണ്"
@@ -55,7 +56,20 @@ def ask():
         lang = detect(user_message)
     except:
         lang = 'en'
+    if "activate developer mode" in user_message:
+        session['awaiting_dev_password'] = True
+        return jsonify({'reply': "Please say the developer password.", 'audio': None})
 
+    # 💡 Step 2: If password is being expected
+    if session.get('awaiting_dev_password'):
+        developer_password = "zara_dev_007"  # 🔐 Change this
+        if user_message.strip() == developer_password:
+            session['dev_mode'] = True
+            session.pop('awaiting_dev_password', None)
+            return jsonify({'reply': "Developer mode activated. Redirecting you now.", 'redirect': '/developer', 'audio': None})
+        else:
+            session.pop('awaiting_dev_password', None)
+            return jsonify({'reply': "Incorrect password. Developer mode not activated.", 'audio': None})
     if lang == 'ml':
         reply = malayalam_response(user_message)
         audio_file = generate_malayalam_audio(reply)
@@ -105,6 +119,14 @@ def resolve_location():
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/developer')
+def developer():
+    if session.get('dev_mode'):
+        return render_template('developer.html')  # Create this page
+    else:
+        return redirect(url_for('home'))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
