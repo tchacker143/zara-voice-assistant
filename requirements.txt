@@ -6,3 +6,4 @@ gunicorn
 datetime
 pytz
 geocoder
+wikipedia
