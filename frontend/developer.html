@@ -2,112 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Zara Developer Panel</title>
-  <link rel="stylesheet" href="/static/styles.css">
+  <title>Zara Core</title>
   <style>
     body {
-      background-color: #121212;
-      font-family: 'Segoe UI', sans-serif;
-      color: #f1f1f1;
-      padding: 20px;
+      margin: 0;
+      background: radial-gradient(ellipse at center, #000 0%, #111 100%);
+      overflow: hidden;
     }
 
-    h1, h2 {
-      color: #00adb5;
-      text-align: center;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: #1e1e1e;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,173,181,0.3);
-    }
-
-    label {
+    canvas {
       display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: none;
-      border-radius: 5px;
-      background: #2e2e2e;
-      color: #fff;
-    }
-
-    button {
-      margin-top: 20px;
-      background-color: #00adb5;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #008f97;
-    }
-
-    #learn-response {
-      margin-top: 15px;
-      color: #88ffcc;
-      font-weight: bold;
-    }
-
-    footer {
-      text-align: center;
-      margin-top: 30px;
-      color: #888;
-      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>👩‍💻 Zara Developer Mode</h1>
-    <p>Teach Zara how to respond to new questions using the form below:</p>
-
-    <form id="learn-form">
-      <label for="question">Question:</label>
-      <input type="text" id="question" name="question" required>
-
-      <label for="answer">Answer:</label>
-      <input type="text" id="answer" name="answer" required>
-
-      <button type="submit">Teach Zara</button>
-    </form>
-
-    <p id="learn-response"></p>
-  </div>
-
-  <footer>
-    Made with 💻 by Developer
-  </footer>
-
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
   <script>
-    document.getElementById('learn-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const question = document.getElementById('question').value;
-      const answer = document.getElementById('answer').value;
+    // Setup scene
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-      const res = await fetch('/learn', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, answer })
-      });
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-      const data = await res.json();
-      document.getElementById('learn-response').innerText = data.message;
-      document.getElementById('question').value = '';
-      document.getElementById('answer').value = '';
+    // Create glowing ball
+    const sphereGeometry = new THREE.SphereGeometry(3, 64, 64);
+    const sphereMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ffff,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.2
+    });
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    scene.add(sphere);
+
+    // Add particles
+    const particleGeometry = new THREE.BufferGeometry();
+    const particleCount = 1000;
+    const posArray = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      const radius = 3;
+      const phi = Math.random() * 2 * Math.PI;
+      const theta = Math.acos(2 * Math.random() - 1);
+      const x = radius * Math.sin(theta) * Math.cos(phi);
+      const y = radius * Math.sin(theta) * Math.sin(phi);
+      const z = radius * Math.cos(theta);
+      posArray.push(x, y, z);
+    }
+
+    particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(posArray, 3));
+
+    const particleMaterial = new THREE.PointsMaterial({
+      color: 0x00ffff,
+      size: 0.05,
+      transparent: true,
+      opacity: 0.9
+    });
+
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    scene.add(particles);
+
+    // Light
+    const pointLight = new THREE.PointLight(0x00ffff, 1, 100);
+    pointLight.position.set(5, 5, 5);
+    scene.add(pointLight);
+
+    // Camera position
+    camera.position.z = 7;
+
+    // Animate
+    function animate() {
+      requestAnimationFrame(animate);
+
+      sphere.rotation.y += 0.001;
+      sphere.rotation.x += 0.001;
+      particles.rotation.y += 0.002;
+      particles.rotation.x += 0.001;
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Responsive
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     });
   </script>
 </body>
