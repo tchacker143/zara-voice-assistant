@@ -1,11 +1,114 @@
-<!-- frontend/developer.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Developer Mode</title>
+  <meta charset="UTF-8">
+  <title>Zara Developer Panel</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    body {
+      background-color: #121212;
+      font-family: 'Segoe UI', sans-serif;
+      color: #f1f1f1;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      color: #00adb5;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,173,181,0.3);
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: none;
+      border-radius: 5px;
+      background: #2e2e2e;
+      color: #fff;
+    }
+
+    button {
+      margin-top: 20px;
+      background-color: #00adb5;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #008f97;
+    }
+
+    #learn-response {
+      margin-top: 15px;
+      color: #88ffcc;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #888;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Welcome to Developer Mode</h1>
-  <p>Here you can add admin tools, logs, or advanced controls.</p>
+  <div class="container">
+    <h1>👩‍💻 Zara Developer Mode</h1>
+    <p>Teach Zara how to respond to new questions using the form below:</p>
+
+    <form id="learn-form">
+      <label for="question">Question:</label>
+      <input type="text" id="question" name="question" required>
+
+      <label for="answer">Answer:</label>
+      <input type="text" id="answer" name="answer" required>
+
+      <button type="submit">Teach Zara</button>
+    </form>
+
+    <p id="learn-response"></p>
+  </div>
+
+  <footer>
+    Made with 💻 by Developer
+  </footer>
+
+  <script>
+    document.getElementById('learn-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const question = document.getElementById('question').value;
+      const answer = document.getElementById('answer').value;
+
+      const res = await fetch('/learn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, answer })
+      });
+
+      const data = await res.json();
+      document.getElementById('learn-response').innerText = data.message;
+      document.getElementById('question').value = '';
+      document.getElementById('answer').value = '';
+    });
+  </script>
 </body>
 </html>
