@@ -73,7 +73,7 @@ def ask():
         return jsonify({'reply': "Please say the developer password.", 'audio': None})
 
     if session.get('awaiting_dev_password'):
-        if user_message == "zara123":
+        if user_message == "2005":
             session['dev_mode'] = True
             session.pop('awaiting_dev_password', None)
             return jsonify({'reply': "Developer mode activated. Redirecting...", 'redirect': '/developer', 'audio': None})
