@@ -156,6 +156,11 @@ def learn():
     user_memory[question] = answer
     return jsonify({'message': f"Zara learned: '{question}' is '{answer}'"})
 
+# Memory
+@app.route('/memory')
+def memory():
+    return jsonify(user_memory)
+
 # ✅ Run App
 if __name__ == "__main__":
     app.run(debug=True)
