@@ -21,24 +21,22 @@ function speak(text) {
   updateConversation('zara', text);
 }
 
-// Update both conversation panel and memory box
+// Update conversation panel and memory box
 function updateConversation(sender, message) {
   const conversationDiv = document.getElementById('conversation');
   const memoryBox = document.getElementById('memory-box');
 
-  // Update side panel
   const msgDiv = document.createElement('div');
   msgDiv.classList.add(sender === 'user' ? 'user-message' : 'zara-message');
   msgDiv.textContent = message;
   conversationDiv.appendChild(msgDiv);
   conversationDiv.scrollTop = conversationDiv.scrollHeight;
 
-  // Update memory panel
   conversationHistory.push(`${sender === 'user' ? 'You' : 'Zara'}: ${message}`);
   memoryBox.innerHTML = conversationHistory.join('<br>');
 }
 
-// Listen loop
+// Start listening for wake word
 function startWakeLoop() {
   recognition.start();
   document.getElementById("status").innerText = '🎙 Listening for "Zara core"';
@@ -71,7 +69,7 @@ function waitForLearning() {
   setTimeout(() => recognition.start(), 1000);
 }
 
-// Recognition event handler
+// Recognition result handler
 recognition.onresult = (event) => {
   const transcript = event.results[0][0].transcript.toLowerCase();
   console.log("👂 Heard:", transcript);
@@ -87,11 +85,19 @@ recognition.onresult = (event) => {
     if (transcript.includes("start learning")) {
       speak("Okay. Please say the question.");
       waitForLearning();
+    } else if (transcript.includes("feature panel")) {
+      const featurePanel = document.getElementById("feature-panel");
+      if (featurePanel) {
+        featurePanel.style.display = "block";
+        speak("Here is the feature panel.");
+      } else {
+        speak("Feature panel not found in the document.");
+      }
     } else if (transcript.includes("exit")) {
       speak("Deactivating developer mode. Goodbye!");
       resetToWakeMode();
     } else {
-      speak("I didn't catch that. Say 'start learning' to teach me or 'exit' to leave developer mode.");
+      speak("I didn't catch that. Say 'start learning' to teach me, 'feature panel' to open options, or 'exit' to leave developer mode.");
       setTimeout(() => recognition.start(), 3000);
     }
   }
@@ -102,6 +108,11 @@ function resetToWakeMode() {
   listeningForWakeWord = true;
   inCommandMode = false;
   document.getElementById("status").innerText = '🎙 Listening for "Zara core"';
+
+  // Hide feature panel if visible
+  const featurePanel = document.getElementById("feature-panel");
+  if (featurePanel) featurePanel.style.display = "none";
+
   recognition.onresult = defaultRecognitionHandler;
   setTimeout(() => recognition.start(), 2000);
 }
@@ -111,14 +122,14 @@ function defaultRecognitionHandler(event) {
   recognition.onresult = recognition.onresult;
 }
 
-// Ensure continuous recognition
+// Keep listening
 recognition.onend = () => {
   if (listeningForWakeWord || inCommandMode) {
     recognition.start();
   }
 };
 
-// Optional hotkey to toggle memory box (press M)
+// Toggle memory box with 'M' key
 document.addEventListener('keydown', (e) => {
   if (e.key.toLowerCase() === 'm') {
     const memoryBox = document.getElementById('memory-box');

@@ -44,7 +44,6 @@
       display: none;
     }
 
-    /* Side panel styles */
     #side-panel {
       position: fixed;
       right: 0;
@@ -55,11 +54,10 @@
       color: #00ffff;
       padding: 20px;
       font-size: 14px;
-      display: flex;
+      display: none;
       flex-direction: column;
       justify-content: flex-end;
       box-shadow: -5px 0 10px rgba(0, 0, 0, 0.5);
-      display: none; /* Hidden initially */
     }
 
     #side-panel h2 {
@@ -82,26 +80,18 @@
       color: #00ffff;
       margin: 5px 0;
     }
-    
   </style>
 </head>
 <body>
 
-  <!-- 🟢 Listening Status -->
-  <div id="status">🎙 Listening for "Zara core"</div>
-
-  <!-- 🧠 Display Learned Q&A (can be toggled later) -->
+  <div id="status">🎙 Listening for "feature panel"</div>
   <div id="memory-box"></div>
-
-  <!-- 🌌 3D Orb and Particles -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
-  <script src="{{ url_for('static', filename='dev.js') }}"></script>
-
-  <!-- Side Panel for Conversation -->
   <div id="side-panel">
     <h2>Conversation</h2>
     <div id="conversation"></div>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
   <script>
     const scene = new THREE.Scene();
@@ -170,41 +160,46 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // Example function to update the conversation panel
     function updateConversation(sender, message) {
       const conversationDiv = document.getElementById('conversation');
       const messageDiv = document.createElement('div');
       messageDiv.classList.add(sender + '-message');
       messageDiv.innerText = message;
       conversationDiv.appendChild(messageDiv);
-      conversationDiv.scrollTop = conversationDiv.scrollHeight; // Scroll to the bottom
+      conversationDiv.scrollTop = conversationDiv.scrollHeight;
     }
 
-    // Example of adding conversation after a user command
-    updateConversation('user', 'Teach me a new skill.');
-    updateConversation('zara', 'Sure! What would you like to teach me?');
+    // Voice Recognition Setup
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.continuous = true;
+    recognition.lang = 'en-US';
 
-    // Example function to simulate Zara talking
-    function zaraResponse(response) {
-      updateConversation('zara', response);
-    }
+    recognition.onresult = function (event) {
+      const last = event.results.length - 1;
+      const command = event.results[last][0].transcript.trim().toLowerCase();
+      document.getElementById('status').innerText = `🗣 Heard: "${command}"`;
+      handleVoiceCommand(command);
+    };
 
-    // Simulate Zara asking for input
-    setTimeout(() => zaraResponse("Thanks for teaching me! I've saved it."), 2000);
+    recognition.onerror = function (event) {
+      console.error('Speech recognition error:', event.error);
+      document.getElementById('status').innerText = '❌ Voice recognition error';
+    };
 
-    // Voice command to toggle side panel visibility
+    recognition.start();
+
     function handleVoiceCommand(command) {
-      if (command.includes("show the feature panel")) {
+      if (command.includes("feature panel") || command.includes("show panel")) {
         document.getElementById('side-panel').style.display = 'flex';
-      } else if (command.includes("open chat panel")) {
-        document.getElementById('side-panel').style.display = 'flex';
+        updateConversation("zara", "Feature panel opened.");
       } else if (command.includes("close panel")) {
         document.getElementById('side-panel').style.display = 'none';
+        updateConversation("zara", "Feature panel closed.");
+      } else {
+        updateConversation("user", command);
+        updateConversation("zara", "Command not recognized for panel control.");
       }
     }
-
-    // Example voice command usage
-    setTimeout(() => handleVoiceCommand("show the feature panel"), 3000);  // Simulate command
   </script>
 </body>
 </html>
