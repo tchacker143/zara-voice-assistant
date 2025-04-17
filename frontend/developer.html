@@ -1,25 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Zara Core</title>
+  <meta charset="UTF-8" />
+  <title>Zara Developer Mode</title>
   <style>
     body {
       margin: 0;
       background: radial-gradient(ellipse at center, #000 0%, #111 100%);
       overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
     }
 
     canvas {
       display: block;
     }
+
+    #status {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #00ffff;
+      font-size: 18px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 10px 25px;
+      border-radius: 10px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 0 15px #00ffff55;
+    }
+
+    #memory-box {
+      position: absolute;
+      bottom: 30px;
+      left: 30px;
+      color: #00ffff;
+      font-size: 14px;
+      max-width: 400px;
+      font-family: monospace;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 10px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      display: none;
+    }
   </style>
 </head>
 <body>
+
+  <!-- 🟢 Listening Status -->
+  <div id="status">🎙 Listening for "Zara core"</div>
+
+  <!-- 🧠 Display Learned Q&A (can be toggled later) -->
+  <div id="memory-box"></div>
+
+  <!-- 🌌 3D Orb and Particles -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
   <script src="{{ url_for('static', filename='dev.js') }}"></script>
+
   <script>
-    // Setup scene
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
@@ -27,7 +65,6 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Create glowing ball
     const sphereGeometry = new THREE.SphereGeometry(3, 64, 64);
     const sphereMaterial = new THREE.MeshBasicMaterial({
       color: 0x00ffff,
@@ -38,7 +75,6 @@
     const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
     scene.add(sphere);
 
-    // Add particles
     const particleGeometry = new THREE.BufferGeometry();
     const particleCount = 1000;
     const posArray = [];
@@ -65,29 +101,23 @@
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     scene.add(particles);
 
-    // Light
     const pointLight = new THREE.PointLight(0x00ffff, 1, 100);
     pointLight.position.set(5, 5, 5);
     scene.add(pointLight);
 
-    // Camera position
     camera.position.z = 7;
 
-    // Animate
     function animate() {
       requestAnimationFrame(animate);
-
       sphere.rotation.y += 0.001;
       sphere.rotation.x += 0.001;
       particles.rotation.y += 0.002;
       particles.rotation.x += 0.001;
-
       renderer.render(scene, camera);
     }
 
     animate();
 
-    // Responsive
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
