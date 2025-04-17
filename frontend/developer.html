@@ -59,6 +59,7 @@
       flex-direction: column;
       justify-content: flex-end;
       box-shadow: -5px 0 10px rgba(0, 0, 0, 0.5);
+      display: none; /* Hidden initially */
     }
 
     #side-panel h2 {
@@ -81,7 +82,7 @@
       color: #00ffff;
       margin: 5px 0;
     }
-
+    
   </style>
 </head>
 <body>
@@ -190,6 +191,20 @@
 
     // Simulate Zara asking for input
     setTimeout(() => zaraResponse("Thanks for teaching me! I've saved it."), 2000);
+
+    // Voice command to toggle side panel visibility
+    function handleVoiceCommand(command) {
+      if (command.includes("show the feature panel")) {
+        document.getElementById('side-panel').style.display = 'flex';
+      } else if (command.includes("open chat panel")) {
+        document.getElementById('side-panel').style.display = 'flex';
+      } else if (command.includes("close panel")) {
+        document.getElementById('side-panel').style.display = 'none';
+      }
+    }
+
+    // Example voice command usage
+    setTimeout(() => handleVoiceCommand("show the feature panel"), 3000);  // Simulate command
   </script>
 </body>
 </html>
