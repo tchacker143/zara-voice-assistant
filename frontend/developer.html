@@ -43,6 +43,45 @@
       white-space: pre-wrap;
       display: none;
     }
+
+    /* Side panel styles */
+    #side-panel {
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: 300px;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: #00ffff;
+      padding: 20px;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      box-shadow: -5px 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    #side-panel h2 {
+      margin-bottom: 10px;
+    }
+
+    #conversation {
+      overflow-y: auto;
+      height: 90%;
+      font-family: monospace;
+      padding-right: 5px;
+    }
+
+    .user-message {
+      color: #ffcc00;
+      margin: 5px 0;
+    }
+
+    .zara-message {
+      color: #00ffff;
+      margin: 5px 0;
+    }
+
   </style>
 </head>
 <body>
@@ -56,6 +95,12 @@
   <!-- 🌌 3D Orb and Particles -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
   <script src="{{ url_for('static', filename='dev.js') }}"></script>
+
+  <!-- Side Panel for Conversation -->
+  <div id="side-panel">
+    <h2>Conversation</h2>
+    <div id="conversation"></div>
+  </div>
 
   <script>
     const scene = new THREE.Scene();
@@ -123,6 +168,28 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
+
+    // Example function to update the conversation panel
+    function updateConversation(sender, message) {
+      const conversationDiv = document.getElementById('conversation');
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add(sender + '-message');
+      messageDiv.innerText = message;
+      conversationDiv.appendChild(messageDiv);
+      conversationDiv.scrollTop = conversationDiv.scrollHeight; // Scroll to the bottom
+    }
+
+    // Example of adding conversation after a user command
+    updateConversation('user', 'Teach me a new skill.');
+    updateConversation('zara', 'Sure! What would you like to teach me?');
+
+    // Example function to simulate Zara talking
+    function zaraResponse(response) {
+      updateConversation('zara', response);
+    }
+
+    // Simulate Zara asking for input
+    setTimeout(() => zaraResponse("Thanks for teaching me! I've saved it."), 2000);
   </script>
 </body>
 </html>

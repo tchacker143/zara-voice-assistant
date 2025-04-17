@@ -10,11 +10,25 @@ let listeningForWakeWord = true;
 let inCommandMode = false;
 const WAKE_WORD = "zara";
 
+// Conversation history (For the side panel)
+const conversationHistory = [];
+
 // Voice output
 function speak(text) {
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = 'en-IN';
   window.speechSynthesis.speak(utter);
+  updateConversation("Zara: " + text);
+}
+
+// Update the conversation panel (side panel)
+function updateConversation(text) {
+  // Add the new message to the conversation history
+  conversationHistory.push(text);
+
+  // Update the conversation box in the HTML
+  const memoryBox = document.getElementById("memory-box");
+  memoryBox.innerHTML = conversationHistory.join('<br>'); // Join messages with line breaks
 }
 
 // Looping wake word listener
@@ -53,11 +67,13 @@ function waitForLearning() {
   recognition.onresult = (event) => {
     const q = event.results[0][0].transcript;
     speak("Got the question. Now tell me the answer.");
+    updateConversation("Developer: " + q);  // Update conversation panel with developer's question
     
     recognition.onresult = (event) => {
       const a = event.results[0][0].transcript;
       speak("Thank you for teaching me.");
-      
+      updateConversation("Zara: " + a);  // Update conversation panel with Zara's answer
+
       fetch("/learn", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,5 +103,5 @@ recognition.onend = () => {
   }
 };
 
-// Start
+// Start listening for the wake word
 startWakeLoop();
