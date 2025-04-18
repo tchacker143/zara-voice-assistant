@@ -9,24 +9,29 @@ recognition.continuous = false;
 const WAKE_WORD = "zara";
 const conversationHistory = [];
 
-// ✅ Speak with voice selection
+// 🔁 Load voices when available
+window.speechSynthesis.onvoiceschanged = () => {
+  availableVoices = speechSynthesis.getVoices();
+  console.log("✅ Voices loaded:", availableVoices.map(v => v.name));
+};
+
+// 🗣 Speak with selected voice
 function speak(text) {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'en-IN';
 
-  const voices = window.speechSynthesis.getVoices();
-  const selectedVoice = voices.find(v => v.lang.includes("en") && v.name.toLowerCase().includes("google")) || voices[0];
-  if (selectedVoice) utterance.voice = selectedVoice;
+  const selectedVoice = availableVoices.find(voice =>
+    voice.lang.toLowerCase().includes("en") &&
+    voice.name.toLowerCase().includes("google")
+  ) || availableVoices[0];
 
-  window.speechSynthesis.speak(utterance);
-  updateConversation("zara", text);
+  if (selectedVoice) {
+    utterance.voice = selectedVoice;
+  }
+
+  speechSynthesis.speak(utterance);
+  updateConversation('zara', text);
 }
-
-// 🔁 Load voices once
-window.speechSynthesis.onvoiceschanged = () => {
-  console.log("✅ Voices loaded:", window.speechSynthesis.getVoices());
-};
-
 // 🗣 Update text panel
 function updateConversation(sender, message) {
   const conversationDiv = document.getElementById('conversation');
