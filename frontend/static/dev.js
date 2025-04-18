@@ -99,7 +99,7 @@ function handleRecognition(event) {
   } else if (command.includes("show conversation")) {
     const sidePanel = document.getElementById("side-panel");
     if (sidePanel) {
-      sidePanel.style.display = "block";
+      sidePanel.style.display = "flex";
       speak("Conversation panel is now visible.");
     }
     recognition.start();
