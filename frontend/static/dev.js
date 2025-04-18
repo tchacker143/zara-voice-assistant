@@ -6,8 +6,6 @@ recognition.lang = 'en-IN';
 recognition.interimResults = false;
 recognition.continuous = false;
 
-let listeningForWakeWord = true;
-let inCommandMode = false;
 const WAKE_WORD = "zara";
 
 // Store conversation history
@@ -36,13 +34,7 @@ function updateConversation(sender, message) {
   memoryBox.innerHTML = conversationHistory.join('<br>');
 }
 
-// Start listening for wake word
-function startWakeLoop() {
-  recognition.start();
-  document.getElementById("status").innerText = '🎙 Listening for "Zara core"';
-}
-
-// Learning mode
+// Handle learning
 function waitForLearning() {
   recognition.onresult = (event) => {
     const q = event.results[0][0].transcript;
@@ -59,83 +51,77 @@ function waitForLearning() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q, answer: a })
       }).then(() => {
-        resetToWakeMode();
+        recognition.onresult = handleRecognition;
+        recognition.start();
       });
     };
 
-    setTimeout(() => recognition.start(), 2000);
+    setTimeout(() => recognition.start(), 1500);
   };
 
   setTimeout(() => recognition.start(), 1000);
 }
 
-// Recognition result handler
-recognition.onresult = (event) => {
-  const transcript = event.results[0][0].transcript.toLowerCase();
+// Main recognition handler
+function handleRecognition(event) {
+  const transcript = event.results[0][0].transcript.toLowerCase().trim();
   console.log("👂 Heard:", transcript);
 
-  if (listeningForWakeWord && transcript.includes(WAKE_WORD)) {
-    document.getElementById("status").innerText = "🟡 Command Mode Activated";
-    listeningForWakeWord = false;
-    inCommandMode = true;
-    speak("Hello Developer. Would you like to teach me something, view what I know, or see upgrades?");
-    setTimeout(() => recognition.start(), 3000);
+  // Only respond if it starts with "zara"
+  if (!transcript.startsWith(WAKE_WORD)) {
+    console.log("❌ Wake word not detected. Ignoring...");
+    recognition.start();
+    return;
   }
-  else if (inCommandMode) {
-    if (transcript.includes("start learning")) {
-      speak("Okay. Please say the question.");
-      waitForLearning();
-    } else if (transcript.includes("feature panel")) {
-      const featurePanel = document.getElementById("feature-panel");
-      if (featurePanel) {
-        featurePanel.style.display = "block";
-        speak("Here is the feature panel.");
-      } else {
-        speak("Feature panel not found in the document.");
-      }
-    } else if (transcript.includes("exit")) {
-      speak("Deactivating developer mode. Goodbye!");
-      resetToWakeMode();
+
+  // Extract the actual command after "zara"
+  const command = transcript.replace(WAKE_WORD, '').replace(/^,?\s*/, ''); // remove "zara" and comma
+  updateConversation("user", transcript);
+
+  // Commands
+  if (command.includes("start learning")) {
+    speak("Okay. Please say the question.");
+    waitForLearning();
+  } else if (command.includes("feature panel") || command.includes("show feature panel")) {
+    const featurePanel = document.getElementById("feature-panel");
+    if (featurePanel) {
+      featurePanel.style.display = "block";
+      speak("Here is the feature panel.");
     } else {
-      speak("I didn't catch that. Say 'start learning' to teach me, 'feature panel' to open options, or 'exit' to leave developer mode.");
-      setTimeout(() => recognition.start(), 3000);
+      speak("Feature panel not found.");
     }
-  }
-};
-
-// Reset to wake mode
-function resetToWakeMode() {
-  listeningForWakeWord = true;
-  inCommandMode = false;
-  document.getElementById("status").innerText = '🎙 Listening for "Zara core"';
-
-  // Hide feature panel if visible
-  const featurePanel = document.getElementById("feature-panel");
-  if (featurePanel) featurePanel.style.display = "none";
-
-  recognition.onresult = defaultRecognitionHandler;
-  setTimeout(() => recognition.start(), 2000);
-}
-
-// Backup handler
-function defaultRecognitionHandler(event) {
-  recognition.onresult = recognition.onresult;
-}
-
-// Keep listening
-recognition.onend = () => {
-  if (listeningForWakeWord || inCommandMode) {
+    recognition.start();
+  } else if (command.includes("exit")) {
+    speak("Deactivating developer mode. Goodbye!");
+    const featurePanel = document.getElementById("feature-panel");
+    if (featurePanel) featurePanel.style.display = "none";
+    recognition.start();
+  } else if (command.includes("show conversation")) {
+    const sidePanel = document.getElementById("side-panel");
+    if (sidePanel) {
+      sidePanel.style.display = "flex";
+      speak("Conversation panel is now visible.");
+    }
+    recognition.start();
+  } else {
+    speak("Sorry, I didn't understand the command.");
     recognition.start();
   }
+}
+
+// Restart on end
+recognition.onend = () => {
+  recognition.start();
 };
 
-// Toggle memory box with 'M' key
+// Start recognition
+recognition.onresult = handleRecognition;
+recognition.start();
+
+// Hotkey for memory toggle
 document.addEventListener('keydown', (e) => {
   if (e.key.toLowerCase() === 'm') {
     const memoryBox = document.getElementById('memory-box');
     memoryBox.style.display = memoryBox.style.display === 'none' ? 'block' : 'none';
   }
 });
-
-// Start recognition
-startWakeLoop();
