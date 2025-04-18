@@ -63,7 +63,7 @@
     #side-panel h2 {
       margin-bottom: 10px;
     }
-    
+
     #conversation {
       overflow-y: auto;
       height: 90%;
@@ -80,6 +80,22 @@
       color: #00ffff;
       margin: 5px 0;
     }
+
+    #feature-panel {
+      display: none;
+      position: fixed;
+      top: 100px;
+      left: 30px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid #00ffff;
+      padding: 15px;
+      color: #00ffff;
+      border-radius: 10px;
+    }
+
+    #feature-panel h3 {
+      margin-top: 0;
+    }
   </style>
 </head>
 <body>
@@ -90,7 +106,7 @@
     <h2>Conversation</h2>
     <div id="conversation"></div>
   </div>
-  <div id="feature-panel" style="display: none; position: fixed; top: 100px; left: 30px; background: rgba(0,0,0,0.6); border: 1px solid #00ffff; padding: 15px; color: #00ffff; border-radius: 10px;">
+  <div id="feature-panel">
     <h3>🧩 Feature Panel</h3>
     <ul>
       <li>🎓 Start Learning</li>
@@ -103,9 +119,9 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
   <script>
+    // Three.js setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
@@ -186,6 +202,7 @@
     recognition.onresult = function (event) {
       const last = event.results.length - 1;
       const command = event.results[last][0].transcript.trim().toLowerCase();
+      console.log("Recognized Command:", command);
       document.getElementById('status').innerText = `🗣 Heard: "${command}"`;
       handleVoiceCommand(command);
     };
@@ -195,20 +212,21 @@
       document.getElementById('status').innerText = '❌ Voice recognition error';
     };
 
-    recognition.start();
-
     function handleVoiceCommand(command) {
-      if (command.includes("feature panel") || command.includes("show panel")) {
-        document.getElementById('side-panel').style.display = 'flex';
-        updateConversation("zara", "Feature panel opened.");
-      } else if (command.includes("close panel")) {
-        document.getElementById('side-panel').style.display = 'none';
-        updateConversation("zara", "Feature panel closed.");
-      } else {
-        updateConversation("user", command);
-        updateConversation("zara", "Command not recognized for panel control.");
+      if (command.includes('feature panel') || command.includes('open feature panel') || command.includes('show feature panel')) {
+        document.getElementById("feature-panel").style.display = "block";
+        updateConversation('zara', 'Feature panel opened.');
       }
     }
+
+    window.onload = () => {
+      try {
+        recognition.start();
+        document.getElementById('status').innerText = '🎙 Listening for "feature panel"';
+      } catch (err) {
+        console.error("Speech recognition could not start:", err);
+      }
+    };
   </script>
 </body>
 </html>
