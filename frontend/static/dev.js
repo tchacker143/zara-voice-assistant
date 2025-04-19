@@ -1,154 +1,116 @@
-console.log("Developer Mode Listening...");
+console.log("🛠️ Developer mode loaded");
 
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const recognition = new SpeechRecognition();
+const synth = window.speechSynthesis;
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 recognition.lang = 'en-IN';
 recognition.interimResults = false;
-recognition.continuous = false;
+recognition.continuous = true;
 
-const WAKE_WORD = "zara";
-const conversationHistory = [];
+let isListeningForWakeWord = true;
+let isLearning = false;
+let pendingQuestion = null;
 
-// 🔁 Load voices when available
-window.speechSynthesis.onvoiceschanged = () => {
-  availableVoices = speechSynthesis.getVoices();
-  console.log("✅ Voices loaded:", availableVoices.map(v => v.name));
-};
+const wakeWord = "zara";
 
-// 🗣 Speak with selected voice
-function speak(text) {
+const speak = (text) => {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'en-IN';
+  synth.speak(utterance);
+};
 
-  const selectedVoice = availableVoices.find(voice =>
-    voice.lang.toLowerCase().includes("en") &&
-    voice.name.toLowerCase().includes("google")
-  ) || availableVoices[0];
+const greetDeveloper = () => {
+  speak("Hello Developer. What would you like to do?");
+  speak("Say 'teach' to teach me something new.");
+  speak("Say 'memory' to view all stored questions.");
+  speak("Say 'features' to know my upgrades.");
+  speak("Or say 'deactivate developer mode' to exit.");
+};
 
-  if (selectedVoice) {
-    utterance.voice = selectedVoice;
-  }
+const handleCommand = (text) => {
+  const msg = text.toLowerCase();
 
-  speechSynthesis.speak(utterance);
-  updateConversation('zara', text);
-}
-// 🗣 Update text panel
-function updateConversation(sender, message) {
-  const conversationDiv = document.getElementById('conversation');
-  const memoryBox = document.getElementById('memory-box');
-
-  const msgDiv = document.createElement('div');
-  msgDiv.classList.add(sender === 'user' ? 'user-message' : 'zara-message');
-  msgDiv.textContent = message;
-  conversationDiv.appendChild(msgDiv);
-  conversationDiv.scrollTop = conversationDiv.scrollHeight;
-
-  conversationHistory.push(`${sender === 'user' ? 'You' : 'Zara'}: ${message}`);
-  memoryBox.innerHTML = conversationHistory.join('<br>');
-}
-
-// 🎓 Learning mode
-function waitForLearning() {
-  recognition.onresult = (event) => {
-    const q = event.results[0][0].transcript;
-    updateConversation("user", q);
-    speak("Got the question. Now tell me the answer.");
-
-    recognition.onresult = (event) => {
-      const a = event.results[0][0].transcript;
-      updateConversation("zara", a);
-      speak("Thank you for teaching me.");
-
-      fetch("/learn", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q, answer: a })
-      }).then(() => {
-        recognition.onresult = handleRecognition;
-        recognition.start();
-      });
-    };
-
-    setTimeout(() => recognition.start(), 1500);
-  };
-
-  setTimeout(() => recognition.start(), 1000);
-}
-
-// 🧠 Main recognition logic
-function handleRecognition(event) {
-  const transcript = event.results[0][0].transcript.toLowerCase().trim();
-  console.log("👂 Heard:", transcript);
-
-  if (listeningForWakeWord && transcript.includes(WAKE_WORD)) {
-    listeningForWakeWord = false;
-    inCommandMode = true;
-    speak("Hello Developer. Would you like to teach me something, view what I know, or see upgrades?");
-    setTimeout(() => recognition.start(), 3000);
-  }
-  const greetDeveloper = () => {
-    speak("Hello Developer. What would you like to do?");
-    speak("Say 'teach' to teach me something new.");
-    speak("Say 'memory' to view all stored questions.");
-    speak("Say 'features' to know my upgrades.");
-    speak("Or say 'deactivate developer mode' to exit.");
-  };
-  const command = transcript.replace(WAKE_WORD, '').replace(/^,?\s*/, '');
-  updateConversation("user", transcript);
-
-  if (command.includes("start learning")) {
-    speak("Okay. Please say the question.");
-    waitForLearning();
-  } else if (command.includes("feature panel") || command.includes("show feature panel")) {
-    const panel = document.getElementById("feature-panel");
-    if (panel) {
-      panel.style.display = "block";
-      speak("Here is the feature panel.");
-    } else {
-      speak("Feature panel not found.");
-    }
-    recognition.start();
-  } else if (command.includes("show conversation")) {
-    const sidePanel = document.getElementById("side-panel");
-    if (sidePanel) {
-      sidePanel.style.display = "flex";
-      speak("Conversation panel is now visible.");
-    }
-    recognition.start();
-  } else if (command.includes("deactivate devaloper mode")) {
-    speak("Deactivating developer mode. Goodbye.");
+  if (msg.includes("deactivate developer mode")) {
+    speak("Exiting developer mode. Goodbye!");
     setTimeout(() => {
       window.location.href = "/"; // go home
     }, 3000);
-  
-    const featurePanel = document.getElementById("feature-panel");
-    if (featurePanel) featurePanel.style.display = "none";
-    recognition.start();
-  } else {
-    speak("Sorry, I didn't understand the command.");
-    recognition.start();
   }
-}
 
-// 🔄 Restart listener when done
-recognition.onend = () => {
-  recognition.start();
+  else if (msg.includes("teach")) {
+    isLearning = true;
+    speak("Please say the question you want me to learn.");
+  }
+
+  else if (msg.includes("memory")) {
+    fetch("/memory")
+      .then(res => res.json())
+      .then(data => {
+        const list = Object.entries(data);
+        if (list.length === 0) {
+          speak("I haven't learned anything yet.");
+        } else {
+          speak(`I remember ${list.length} things. Showing them now.`);
+          const memoryDiv = document.getElementById("dev-memory");
+          memoryDiv.innerHTML = "<h3>🧠 My Learned Memory:</h3><ul>" +
+            list.map(([q, a]) => `<li><strong>Q:</strong> ${q} <br/><strong>A:</strong> ${a}</li>`).join("") +
+            "</ul>";
+        }
+      });
+  }
+
+  else if (msg.includes("features")) {
+    speak("Here are some of my recent features.");
+    speak("Voice-based learning. Location detection. Wikipedia answering. Malayalam and English support.");
+  }
+
+  else if (isLearning) {
+    if (!pendingQuestion) {
+      pendingQuestion = msg;
+      speak("Got it. Now please say the answer.");
+    } else {
+      const answer = msg;
+      fetch("/learn", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: pendingQuestion, answer })
+      })
+      .then(res => res.json())
+      .then(data => {
+        speak(`Thank you. I’ve learned: ${pendingQuestion}`);
+        console.log("🧠 Learned:", data);
+      });
+      pendingQuestion = null;
+      isLearning = false;
+    }
+  }
+
+  else {
+    speak("Sorry, I didn't catch that. Please try again.");
+  }
 };
 
-// 🏁 Start recognition
-recognition.onresult = handleRecognition;
-recognition.start();
+recognition.onresult = (event) => {
+  const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+  console.log("🎧 Heard:", transcript);
 
-// 🧠 Toggle memory box with M key
-document.addEventListener('keydown', (e) => {
-  if (e.key.toLowerCase() === 'm') {
-    const memoryBox = document.getElementById('memory-box');
-    memoryBox.style.display = memoryBox.style.display === 'none' ? 'block' : 'none';
+  if (isListeningForWakeWord && transcript.includes(wakeWord)) {
+    isListeningForWakeWord = false;
+    speak("Yes Developer?");
+    greetDeveloper();
+  } else if (!isListeningForWakeWord) {
+    handleCommand(transcript);
   }
-});
+};
 
-// 🛑 Chrome audio unlock workaround
-window.addEventListener("click", () => {
-  const unlock = new SpeechSynthesisUtterance("Voice unlocked");
-  window.speechSynthesis.speak(unlock);
-}, { once: true });
+recognition.onend = () => {
+  recognition.start(); // keep it always listening
+};
+
+recognition.onerror = (e) => {
+  console.error("❌ Speech recognition error:", e);
+};
+
+window.onload = () => {
+  recognition.start();
+  console.log("🟢 Listening for wake word: Zara");
+};
