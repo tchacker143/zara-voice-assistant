@@ -1,116 +1,100 @@
-console.log("🛠️ Developer mode loaded");
+console.log("Developer Mode Initialized");
 
-const synth = window.speechSynthesis;
-const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
 recognition.lang = 'en-IN';
 recognition.interimResults = false;
-recognition.continuous = true;
+recognition.continuous = false;
 
-let isListeningForWakeWord = true;
-let isLearning = false;
-let pendingQuestion = null;
+const WAKE_WORD = "zara";
 
-const wakeWord = "zara";
+let mode = "wake"; // can be "wake" or "command"
 
-const speak = (text) => {
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-IN';
-  synth.speak(utterance);
-};
+// Speak text
+function speak(text) {
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-IN';
+  window.speechSynthesis.speak(utter);
+  updateConversation("zara", text);
+}
 
-const greetDeveloper = () => {
-  speak("Hello Developer. What would you like to do?");
-  speak("Say 'teach' to teach me something new.");
-  speak("Say 'memory' to view all stored questions.");
-  speak("Say 'features' to know my upgrades.");
-  speak("Or say 'deactivate developer mode' to exit.");
-};
+// Update conversation box
+function updateConversation(sender, message) {
+  const conversationDiv = document.getElementById('conversation');
+  const memoryBox = document.getElementById('memory-box');
 
-const handleCommand = (text) => {
-  const msg = text.toLowerCase();
+  const msgDiv = document.createElement('div');
+  msgDiv.classList.add(sender === 'user' ? 'user-message' : 'zara-message');
+  msgDiv.textContent = message;
+  conversationDiv.appendChild(msgDiv);
+  conversationDiv.scrollTop = conversationDiv.scrollHeight;
 
-  if (msg.includes("deactivate developer mode")) {
-    speak("Exiting developer mode. Goodbye!");
-    setTimeout(() => {
-      window.location.href = "/"; // go home
-    }, 3000);
-  }
+  memoryBox.innerHTML += `${sender === 'user' ? 'You' : 'Zara'}: ${message}<br>`;
+}
 
-  else if (msg.includes("teach")) {
-    isLearning = true;
-    speak("Please say the question you want me to learn.");
-  }
-
-  else if (msg.includes("memory")) {
-    fetch("/memory")
-      .then(res => res.json())
-      .then(data => {
-        const list = Object.entries(data);
-        if (list.length === 0) {
-          speak("I haven't learned anything yet.");
-        } else {
-          speak(`I remember ${list.length} things. Showing them now.`);
-          const memoryDiv = document.getElementById("dev-memory");
-          memoryDiv.innerHTML = "<h3>🧠 My Learned Memory:</h3><ul>" +
-            list.map(([q, a]) => `<li><strong>Q:</strong> ${q} <br/><strong>A:</strong> ${a}</li>`).join("") +
-            "</ul>";
-        }
-      });
-  }
-
-  else if (msg.includes("features")) {
-    speak("Here are some of my recent features.");
-    speak("Voice-based learning. Location detection. Wikipedia answering. Malayalam and English support.");
-  }
-
-  else if (isLearning) {
-    if (!pendingQuestion) {
-      pendingQuestion = msg;
-      speak("Got it. Now please say the answer.");
-    } else {
-      const answer = msg;
-      fetch("/learn", {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: pendingQuestion, answer })
-      })
-      .then(res => res.json())
-      .then(data => {
-        speak(`Thank you. I’ve learned: ${pendingQuestion}`);
-        console.log("🧠 Learned:", data);
-      });
-      pendingQuestion = null;
-      isLearning = false;
-    }
-  }
-
-  else {
-    speak("Sorry, I didn't catch that. Please try again.");
-  }
-};
-
-recognition.onresult = (event) => {
-  const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-  console.log("🎧 Heard:", transcript);
-
-  if (isListeningForWakeWord && transcript.includes(wakeWord)) {
-    isListeningForWakeWord = false;
-    speak("Yes Developer?");
-    greetDeveloper();
-  } else if (!isListeningForWakeWord) {
-    handleCommand(transcript);
-  }
-};
-
-recognition.onend = () => {
-  recognition.start(); // keep it always listening
-};
-
-recognition.onerror = (e) => {
-  console.error("❌ Speech recognition error:", e);
-};
-
-window.onload = () => {
+// Start recognition once
+function listenOnce() {
   recognition.start();
-  console.log("🟢 Listening for wake word: Zara");
+}
+
+// Wake Mode
+function handleWakeResult(event) {
+  const transcript = event.results[0][0].transcript.toLowerCase();
+  console.log("👂 Heard (Wake):", transcript);
+
+  if (transcript.includes(WAKE_WORD)) {
+    speak("Yes, developer?");
+    mode = "command";
+    recognition.onresult = handleCommandResult;
+    setTimeout(listenOnce, 1000); // slight delay before next listen
+  } else {
+    setTimeout(listenOnce, 1500); // retry after short pause
+  }
+}
+
+// Command Mode
+function handleCommandResult(event) {
+  const transcript = event.results[0][0].transcript.toLowerCase();
+  console.log("🎤 Command:", transcript);
+  updateConversation("user", transcript);
+
+  if (transcript.includes("start learning")) {
+    speak("Okay. Please say the question.");
+    // (You can plug in your learning mode here)
+  } else if (transcript.includes("feature panel")) {
+    const featurePanel = document.getElementById("feature-panel");
+    if (featurePanel) {
+      featurePanel.style.display = "block";
+      speak("Here is the feature panel.");
+    } else {
+      speak("Feature panel not found.");
+    }
+  } else if (transcript.includes("exit")) {
+    speak("Goodbye developer.");
+  } else {
+    speak("I didn't understand. Try again.");
+  }
+
+  // Reset back to wake mode
+  mode = "wake";
+  recognition.onresult = handleWakeResult;
+  setTimeout(listenOnce, 2000);
+}
+
+// On end, restart based on mode
+recognition.onend = () => {
+  if (mode === "wake" || mode === "command") {
+    listenOnce();
+  }
 };
+
+// Error handler
+recognition.onerror = (event) => {
+  console.error("❌ Error:", event.error);
+  speak("Mic error occurred.");
+  setTimeout(listenOnce, 3000);
+};
+
+// Start Zara
+recognition.onresult = handleWakeResult;
+listenOnce();
