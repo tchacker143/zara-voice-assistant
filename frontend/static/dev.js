@@ -1,23 +1,5 @@
-console.log("🟢 Developer Mode Loaded");
+console.log("🟢 Developer Mode Listening...");
 
-// 🎙️ Voice setup
-let availableVoices = [];
-
-function loadVoices() {
-  availableVoices = speechSynthesis.getVoices();
-
-  if (availableVoices.length === 0) {
-    setTimeout(loadVoices, 200);
-  } else {
-    console.log("✅ Voices loaded:", availableVoices.map(v => v.name));
-    speak("Welcome back, Developer. I'm listening.");
-  }
-}
-
-speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-
-// 🧠 Setup recognition
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = new SpeechRecognition();
 recognition.lang = 'en-IN';
@@ -26,38 +8,71 @@ recognition.continuous = false;
 
 const WAKE_WORD = "zara";
 const conversationHistory = [];
+let availableVoices = [];
+let voiceReady = false;
 
-// 🗣 Speak using selected voice
-function speak(text) {
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-IN';
-
-  const selectedVoice = availableVoices.find(v =>
-    v.lang.includes("en") && v.name.toLowerCase().includes("google")
-  ) || availableVoices[0];
-
-  if (selectedVoice) utterance.voice = selectedVoice;
-
-  speechSynthesis.speak(utterance);
-  updateConversation("zara", text);
+// 🔁 Load voices with retry
+function loadVoices() {
+  availableVoices = speechSynthesis.getVoices();
+  if (availableVoices.length === 0) {
+    console.log("⏳ Waiting for voices...");
+    setTimeout(loadVoices, 200);
+  } else {
+    voiceReady = true;
+    console.log("✅ Voices ready:", availableVoices.map(v => v.name));
+    greetDeveloper(); // Speak after voices loaded
+  }
 }
 
-// 💬 Conversation log panel
-function updateConversation(sender, message) {
-  const conversationDiv = document.getElementById("conversation");
-  const memoryBox = document.getElementById("memory-box");
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
 
-  const msgDiv = document.createElement("div");
-  msgDiv.classList.add(sender === "user" ? "user-message" : "zara-message");
+// 🗣 Speak helper
+function speak(text) {
+  if (!voiceReady || availableVoices.length === 0) {
+    console.warn("⚠️ Voices not ready. Skipping speech:", text);
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-IN';
+  const voice = availableVoices.find(v =>
+    v.lang.toLowerCase().includes("en") && v.name.toLowerCase().includes("google")
+  ) || availableVoices[0];
+
+  if (voice) utterance.voice = voice;
+  console.log("🗣 Speaking:", text);
+  speechSynthesis.speak(utterance);
+  updateConversation('zara', text);
+}
+
+// 🖐️ Chrome unlock
+window.addEventListener("click", () => {
+  const unlock = new SpeechSynthesisUtterance("Voice unlocked");
+  speechSynthesis.speak(unlock);
+}, { once: true });
+
+// 👋 Greet dev
+function greetDeveloper() {
+  speak("Welcome back, Developer. I'm listening.");
+}
+
+// 💬 Panel updater
+function updateConversation(sender, message) {
+  const conversationDiv = document.getElementById('conversation');
+  const memoryBox = document.getElementById('memory-box');
+
+  const msgDiv = document.createElement('div');
+  msgDiv.classList.add(sender === 'user' ? 'user-message' : 'zara-message');
   msgDiv.textContent = message;
   conversationDiv.appendChild(msgDiv);
   conversationDiv.scrollTop = conversationDiv.scrollHeight;
 
-  conversationHistory.push(`${sender === "user" ? "You" : "Zara"}: ${message}`);
-  memoryBox.innerHTML = conversationHistory.join("<br>");
+  conversationHistory.push(`${sender === 'user' ? 'You' : 'Zara'}: ${message}`);
+  memoryBox.innerHTML = conversationHistory.join('<br>');
 }
 
-// 🔁 Learning Mode
+// 🎓 Learning mode
 function waitForLearning() {
   recognition.onresult = (event) => {
     const q = event.results[0][0].transcript;
@@ -85,13 +100,13 @@ function waitForLearning() {
   setTimeout(() => recognition.start(), 1000);
 }
 
-// 🎯 Recognition & Commands
+// 🧠 Command handler
 function handleRecognition(event) {
   const transcript = event.results[0][0].transcript.toLowerCase().trim();
   console.log("👂 Heard:", transcript);
 
   if (!transcript.startsWith(WAKE_WORD)) {
-    console.log("⏭️ Ignoring input (no wake word)");
+    console.log("⏭️ Ignored: no wake word");
     recognition.start();
     return;
   }
@@ -127,10 +142,8 @@ function handleRecognition(event) {
   }
 }
 
-// 🔁 Keep listening
+// 🔁 Resume listening
 recognition.onend = () => recognition.start();
-
-// ▶️ Start
 recognition.onresult = handleRecognition;
 recognition.start();
 
@@ -141,9 +154,3 @@ document.addEventListener('keydown', (e) => {
     memoryBox.style.display = memoryBox.style.display === 'none' ? 'block' : 'none';
   }
 });
-
-// 🛑 Chrome voice unlock on click
-window.addEventListener("click", () => {
-  const unlock = new SpeechSynthesisUtterance("Voice unlocked");
-  speechSynthesis.speak(unlock);
-}, { once: true });
