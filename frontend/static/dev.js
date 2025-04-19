@@ -85,7 +85,13 @@ function handleRecognition(event) {
     recognition.start();
     return;
   }
-
+  const greetDeveloper = () => {
+    speak("Hello Developer. What would you like to do?");
+    speak("Say 'teach' to teach me something new.");
+    speak("Say 'memory' to view all stored questions.");
+    speak("Say 'features' to know my upgrades.");
+    speak("Or say 'deactivate developer mode' to exit.");
+  };
   const command = transcript.replace(WAKE_WORD, '').replace(/^,?\s*/, '');
   updateConversation("user", transcript);
 
@@ -110,6 +116,10 @@ function handleRecognition(event) {
     recognition.start();
   } else if (command.includes("exit")) {
     speak("Deactivating developer mode. Goodbye.");
+    setTimeout(() => {
+      window.location.href = "/"; // go home
+    }, 3000);
+  
     const featurePanel = document.getElementById("feature-panel");
     if (featurePanel) featurePanel.style.display = "none";
     recognition.start();
