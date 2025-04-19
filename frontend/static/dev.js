@@ -80,10 +80,11 @@ function handleRecognition(event) {
   const transcript = event.results[0][0].transcript.toLowerCase().trim();
   console.log("👂 Heard:", transcript);
 
-  if (!transcript.startsWith(WAKE_WORD)) {
-    console.log("❌ Wake word not detected. Ignoring...");
-    recognition.start();
-    return;
+  if (listeningForWakeWord && transcript.includes(WAKE_WORD)) {
+    listeningForWakeWord = false;
+    inCommandMode = true;
+    speak("Hello Developer. Would you like to teach me something, view what I know, or see upgrades?");
+    setTimeout(() => recognition.start(), 3000);
   }
   const greetDeveloper = () => {
     speak("Hello Developer. What would you like to do?");
@@ -114,7 +115,7 @@ function handleRecognition(event) {
       speak("Conversation panel is now visible.");
     }
     recognition.start();
-  } else if (command.includes("exit")) {
+  } else if (command.includes("deactivate devaloper mode")) {
     speak("Deactivating developer mode. Goodbye.");
     setTimeout(() => {
       window.location.href = "/"; // go home
