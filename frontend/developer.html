@@ -1,8 +1,10 @@
+<!-- developer.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Zara Developer Mode</title>
+  <link rel="stylesheet" href="/static/styles.css">
   <style>
     body {
       margin: 0;
@@ -25,87 +27,53 @@
       background: rgba(0, 0, 0, 0.5);
       padding: 10px 25px;
       border-radius: 10px;
-      backdrop-filter: blur(4px);
       box-shadow: 0 0 15px #00ffff55;
     }
 
-    #memory-box {
-      position: absolute;
-      bottom: 30px;
-      left: 30px;
-      color: #00ffff;
-      font-size: 14px;
-      max-width: 400px;
-      font-family: monospace;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 10px;
-      border-radius: 8px;
-      white-space: pre-wrap;
+    #feature-panel, #memory-box, #side-panel {
       display: none;
+      position: fixed;
+      background: rgba(0, 0, 0, 0.6);
+      color: #00ffff;
+      border: 1px solid #00ffff;
+      border-radius: 10px;
+      padding: 15px;
+    }
+
+    #feature-panel {
+      top: 100px;
+      left: 30px;
     }
 
     #side-panel {
-      position: fixed;
       right: 0;
       top: 0;
       width: 300px;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      color: #00ffff;
       padding: 20px;
-      font-size: 14px;
-      display: none;
+      display: flex;
       flex-direction: column;
       justify-content: flex-end;
-      box-shadow: -5px 0 10px rgba(0, 0, 0, 0.5);
-    }
-
-    #side-panel h2 {
-      margin-bottom: 10px;
     }
 
     #conversation {
       overflow-y: auto;
       height: 90%;
       font-family: monospace;
-      padding-right: 5px;
     }
 
     .user-message {
       color: #ffcc00;
-      margin: 5px 0;
     }
 
     .zara-message {
       color: #00ffff;
-      margin: 5px 0;
-    }
-
-    #feature-panel {
-      display: none;
-      position: fixed;
-      top: 100px;
-      left: 30px;
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid #00ffff;
-      padding: 15px;
-      color: #00ffff;
-      border-radius: 10px;
-    }
-
-    #feature-panel h3 {
-      margin-top: 0;
     }
   </style>
 </head>
 <body>
 
-  <div id="status">🎙 Listening for "feature panel"</div>
-  <div id="memory-box"></div>
-  <div id="side-panel">
-    <h2>Conversation</h2>
-    <div id="conversation"></div>
-  </div>
+  <div id="status">🎙 Listening for "Zara..."</div>
   <div id="feature-panel">
     <h3>🧩 Feature Panel</h3>
     <ul>
@@ -116,119 +84,14 @@
     </ul>
   </div>
 
+  <div id="side-panel">
+    <h3>Conversation</h3>
+    <div id="conversation"></div>
+  </div>
+
+  <div id="memory-box"></div>
+
   <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
-
-  <script>
-    // Three.js setup
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    const sphereGeometry = new THREE.SphereGeometry(3, 64, 64);
-    const sphereMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00ffff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.2
-    });
-    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    scene.add(sphere);
-
-    const particleGeometry = new THREE.BufferGeometry();
-    const particleCount = 1000;
-    const posArray = [];
-
-    for (let i = 0; i < particleCount; i++) {
-      const radius = 3;
-      const phi = Math.random() * 2 * Math.PI;
-      const theta = Math.acos(2 * Math.random() - 1);
-      const x = radius * Math.sin(theta) * Math.cos(phi);
-      const y = radius * Math.sin(theta) * Math.sin(phi);
-      const z = radius * Math.cos(theta);
-      posArray.push(x, y, z);
-    }
-
-    particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(posArray, 3));
-
-    const particleMaterial = new THREE.PointsMaterial({
-      color: 0x00ffff,
-      size: 0.05,
-      transparent: true,
-      opacity: 0.9
-    });
-
-    const particles = new THREE.Points(particleGeometry, particleMaterial);
-    scene.add(particles);
-
-    const pointLight = new THREE.PointLight(0x00ffff, 1, 100);
-    pointLight.position.set(5, 5, 5);
-    scene.add(pointLight);
-
-    camera.position.z = 7;
-
-    function animate() {
-      requestAnimationFrame(animate);
-      sphere.rotation.y += 0.001;
-      sphere.rotation.x += 0.001;
-      particles.rotation.y += 0.002;
-      particles.rotation.x += 0.001;
-      renderer.render(scene, camera);
-    }
-
-    animate();
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    function updateConversation(sender, message) {
-      const conversationDiv = document.getElementById('conversation');
-      const messageDiv = document.createElement('div');
-      messageDiv.classList.add(sender + '-message');
-      messageDiv.innerText = message;
-      conversationDiv.appendChild(messageDiv);
-      conversationDiv.scrollTop = conversationDiv.scrollHeight;
-    }
-
-    // Voice Recognition Setup
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.continuous = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = function (event) {
-      const last = event.results.length - 1;
-      const command = event.results[last][0].transcript.trim().toLowerCase();
-      console.log("Recognized Command:", command);
-      document.getElementById('status').innerText = `🗣 Heard: "${command}"`;
-      handleVoiceCommand(command);
-    };
-
-    recognition.onerror = function (event) {
-      console.error('Speech recognition error:', event.error);
-      document.getElementById('status').innerText = '❌ Voice recognition error';
-    };
-
-    function handleVoiceCommand(command) {
-      if (command.includes('feature panel') || command.includes('open feature panel') || command.includes('show feature panel')) {
-        document.getElementById("feature-panel").style.display = "block";
-        updateConversation('zara', 'Feature panel opened.');
-      }
-    }
-
-    window.onload = () => {
-      try {
-        recognition.start();
-        document.getElementById('status').innerText = '🎙 Listening for "feature panel"';
-      } catch (err) {
-        console.error("Speech recognition could not start:", err);
-      }
-    };
-  </script>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
-
+  <script src="/static/dev.js"></script>
 </body>
 </html>
