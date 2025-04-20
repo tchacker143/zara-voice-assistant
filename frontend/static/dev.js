@@ -93,7 +93,24 @@ function handleCommand(transcript) {
     document.getElementById("memory-box").innerHTML = "";
     speak("Conversation history cleared.");
   } else {
-    speak("Sorry, I didn't understand that.");
+    // 🔍 Try answering from backend
+    fetch("/answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: command })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.answer) {
+        speak(data.answer);
+      } else {
+        speak("Sorry, I didn't understand that.");
+      }
+    })
+    .catch(err => {
+      console.error("❌ Error retrieving answer:", err);
+      speak("Sorry, something went wrong while checking my knowledge.");
+    });
   }
 
   recognition.start();
@@ -101,8 +118,14 @@ function handleCommand(transcript) {
 
 recognition.onresult = (event) => {
   const text = event.results[0][0].transcript.toLowerCase();
-  if (!text.startsWith(WAKE_WORD)) return recognition.start();
-  handleCommand(text);
+
+  if (learningState === 'awaiting-answer') {
+    handleCommand(text); // Allow raw input during answer
+  } else if (text.startsWith(WAKE_WORD)) {
+    handleCommand(text);
+  }
+
+  recognition.start();
 };
 
 recognition.onend = () => recognition.start();
