@@ -5,6 +5,8 @@ let availableVoices = [];
 let voiceReady = false;
 const WAKE_WORD = "zara";
 const conversationHistory = [];
+let learningState = null; // 'awaiting-question' | 'awaiting-answer'
+let tempQuestion = "";
 
 const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 recognition.lang = 'en-IN';
@@ -48,7 +50,35 @@ function handleCommand(transcript) {
   const command = transcript.replace(WAKE_WORD, '').replace(/^,?\s*/, '').trim();
   updateConversation("user", transcript);
 
-  if (command.includes("feature panel")) {
+  if (learningState === 'awaiting-question') {
+    tempQuestion = command;
+    learningState = 'awaiting-answer';
+    speak("Got the question. Now tell me the answer.");
+    return;
+  }
+
+  if (learningState === 'awaiting-answer') {
+    const answer = command;
+    learningState = null;
+    speak("Thank you for teaching me.");
+
+    fetch("/learn", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: tempQuestion, answer: answer })
+    }).then(() => {
+      console.log("🧠 Q&A saved to backend.");
+    }).catch(err => {
+      console.error("❌ Error saving Q&A:", err);
+    });
+    return;
+  }
+
+  // Normal commands
+  if (command.includes("start learning")) {
+    learningState = 'awaiting-question';
+    speak("Okay. Please tell me the question.");
+  } else if (command.includes("feature panel")) {
     document.getElementById("feature-panel").style.display = "block";
     speak("Here is the feature panel.");
   } else if (command.includes("show conversation")) {
@@ -65,6 +95,7 @@ function handleCommand(transcript) {
   } else {
     speak("Sorry, I didn't understand that.");
   }
+
   recognition.start();
 }
 
