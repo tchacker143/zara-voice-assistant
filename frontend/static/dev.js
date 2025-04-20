@@ -57,6 +57,11 @@ function handleCommand(transcript) {
   } else if (command.includes("exit")) {
     speak("Exiting developer mode. Goodbye.");
     document.getElementById("feature-panel").style.display = "none";
+  } else if (command.includes("clear conversation")) {
+    document.getElementById("conversation").innerHTML = "";
+    conversationHistory.length = 0;
+    document.getElementById("memory-box").innerHTML = "";
+    speak("Conversation history cleared.");
   } else {
     speak("Sorry, I didn't understand that.");
   }
